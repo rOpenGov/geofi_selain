@@ -29,7 +29,7 @@ names(orglist) <- paste0(apis$provider," [", apis$api_url,"]")
 ui <- fluidPage(
 
    # Application title
-   titlePanel("WFS-apiselain v.0.1.3"),
+   titlePanel("geofi-selain v.0.1.1"),
 
    # Sidebar with a slider input for number of bins
    sidebarLayout(
@@ -43,15 +43,16 @@ ui <- fluidPage(
       br(),
       radioButtons("file_type", "",
                    choiceNames = list("GeoPackage (.gpkg)", "Shapefile (.shp)",
-                                       "Vektorikuva (.svg)", "Bittimappikuva (.png)"),
+                                       "Vektorikuva (.svg)", "Vektorikuva (.pdf)",
+                                      "Bittimappikuva (.png)"),
                    # NOTE: the first value is ".zip", not ".shp", as shapefile
                    # must be zipped. Shiny can only output one file and each
                    # shapefile constitutes of several files.
-                   choiceValues = list(".gpkg", ".zip", ".svg", ".png"),
+                   choiceValues = list(".gpkg", ".zip", ".svg", ".pdf", ".png"),
                    inline = TRUE),
       tags$hr(),
       tags$p("Tällä sovelluksella voit selata eri ",tags$code("geofi"),"-R-paketin tarjoamia datoja ja toiminnallisuuksia. Voit tallentaa aineistoja", 
-             tags$code("GeoPackage, Shapefile, .svg tai .png"),"-muotoihin sekä aggregoida kuntatason datoja ylemmille aluejaoille."),
+             tags$code("GeoPackage, Shapefile, .svg, .pdf tai .png"),"-muotoihin sekä aggregoida kuntatason datoja ylemmille aluejaoille."),
       tags$p("Sovellus on tehty R:n",
              tags$a(href = "https://shiny.rstudio.com/", "Shiny")), 
       tags$a(href = "https://gitlab.com/muuankarski/geofi_selain", "Lähdekoodi Gitlab:ssa"),
@@ -85,7 +86,7 @@ server <- function(input, output) {
        selectInput(inputId = "value_layer",
                    label = "Valitse aineisto:",
                    choices = layers,
-                   selected = layers[14])
+                   selected = layers[16])
      )
    })
    
@@ -137,9 +138,8 @@ server <- function(input, output) {
          shape <- data_input()
          shape$aggvar <- shape[[input$value_aggregation]]
          shape2 <- shape %>% 
-            group_by(aggvar) %>% 
-            summarise() %>% 
-            ungroup()
+            dplyr::group_by(aggvar) %>% 
+            dplyr::summarise()
       }
       return(shape2)
       
@@ -197,6 +197,22 @@ server <- function(input, output) {
                geom_sf() +
                theme_minimal()
             ggsave(file, plot = p1, device = "svg")
+         } else if (input$file_type == ".png") {
+            # Write SVG using ggplot2
+            p1 <- dat %>%
+               select(1) %>%
+               ggplot() +
+               geom_sf() +
+               theme_minimal()
+            ggsave(file, plot = p1, device = "png")
+         } else if (input$file_type == ".pdf") {
+            # Write SVG using ggplot2
+            p1 <- dat %>%
+               select(1) %>%
+               ggplot() +
+               geom_sf() +
+               theme_minimal()
+            ggsave(file, plot = p1, device = cairo_pdf)
          }
       }
    )
@@ -211,7 +227,7 @@ server <- function(input, output) {
    
    output$temp <- renderTable({
       shape <- data_aggregate()
-      st_drop_geometry(shape) %>% head()
+      st_drop_geometry(shape)
    })
 
 }

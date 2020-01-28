@@ -38,6 +38,9 @@ ui <- fluidPage(
    # Sidebar with a slider input for number of bins
    sidebarLayout(
       sidebarPanel(
+         tags$p("Tällä sovelluksella voit selata eri ",tags$code("geofi"),"-R-paketin tarjoamia datoja ja toiminnallisuuksia. Voit tallentaa aineistoja", 
+                tags$code("GeoPackage, Shapefile, .svg, .pdf tai .png"),"-muotoihin sekä aggregoida kuntatason datoja ylemmille aluejaoille."),
+         tags$hr(),
          selectInput("value_org",
                      "Valitse datan lähde:",
                      choices = orglist),
@@ -56,8 +59,6 @@ ui <- fluidPage(
                    choiceValues = list(".gpkg", ".zip", ".svg", ".pdf", ".png"),
                    inline = FALSE),
       tags$hr(),
-      tags$p("Tällä sovelluksella voit selata eri ",tags$code("geofi"),"-R-paketin tarjoamia datoja ja toiminnallisuuksia. Voit tallentaa aineistoja", 
-             tags$code("GeoPackage, Shapefile, .svg, .pdf tai .png"),"-muotoihin sekä aggregoida kuntatason datoja ylemmille aluejaoille."),
       tags$p("Sovellus on tehty R:n",
              tags$a(href = "https://shiny.rstudio.com/", "Shiny")), 
       tags$a(href = "https://gitlab.com/muuankarski/geofi_selain", "Lähdekoodi Gitlab:ssa"),
@@ -114,14 +115,18 @@ server <- function(input, output) {
       } else {
          layer_row <- api_content[api_content$provider %in% input$value_org & api_content$title %in% input$value_layer,]
          
-         tmp <- get(paste0("municipality_key_",sub("^.+_", "", layer_row$name)))
+         dataname <- paste0("municipality_key_",sub("^.+_", "", layer_row$name))
+         tmp <- get(dataname)
          nms <- names(tmp)
          
          tagList(
             selectInput(inputId = "value_aggregation",
                         label = "Valitse aggregoitava alueluokitus:",
                         choices = nms,
-                        selected = "mk_name")
+                        selected = "mk_name"),
+               tags$strong(
+               tags$a(href = glue::glue("https://ropengov.github.io/geofi/reference/{dataname}.html"), 
+                   "Katso lisätietoja saatavilla olevista alueluokituksista!"))
          )
       }
 

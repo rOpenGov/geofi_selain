@@ -11,6 +11,7 @@ library(dplyr)
 library(ggplot2)
 library(janitor)
 library(leaflet)
+# devtools::install_github("ropengov/geofi")
 library(geofi)
 library(sf)
 library(shiny)
@@ -32,7 +33,7 @@ names(orglist) <- paste0(apis$provider," [", apis$api_url,"]")
 ui <- fluidPage(
 
    # Application title
-   titlePanel("geofi-selain v.0.1.1"),
+   titlePanel("geofi-selain v.0.1.2"),
 
    # Sidebar with a slider input for number of bins
    sidebarLayout(
@@ -70,9 +71,10 @@ ui <- fluidPage(
       mainPanel(
         tabsetPanel(
           tabPanel("Esikatselu",
-                   withSpinner(plotOutput("plot_shape", width = "100%", height = "850px")))
+                   withSpinner(plotOutput("plot_shape", width = "100%", height = "850px"))),
           # tabPanel("Esikatselu",
           #          withSpinner(tableOutput("temp")))
+          tabPanel("R-koodi kartan piirtämiseen", verbatimTextOutput("output_code"))
         )
       )
    )
@@ -281,7 +283,71 @@ server <- function(input, output) {
    #    shape <- data_aggregate()
    #    st_drop_geometry(shape)
    # })
+   
+   
+   output$output_code <- renderText({
+      
+      
+      layer_row <- api_content[api_content$provider %in% input$value_org & api_content$title %in% input$value_layer,]
+      
+      
+#       glue::glue('
+# library(ows4R)
+# wfs <- WFSClient$new("{layer_row$api_url}",
+#                     serviceVersion = "{layer_row$api_ver}",
+#                     logger = "INFO")
+# 
+# caps <- wfs$getCapabilities()
+# ft <- caps$findFeatureTypeByName("{layer_row$name}", exact = TRUE)
+# shape <- ft$getFeatures()')
+      
+      
+      if (grepl("kunta", layer_row$name)){
+         code <- glue::glue('
+# devtools::install_github("ropengov/geofi")
+library(geofi)
+library(dplyr)
+library(ggplot2)
+shape <- geofi::get_municipalities(year = {sub("^.+_", "", layer_row$name)}, scale = {sub("^.+kunta", "",  sub("k_.+$", "", layer_row$name))})
+shape2 <- shape %>% 
+    group_by({input$value_aggregation}) %>% 
+    summarise()
+ggplot(shape2) + 
+    geom_sf(fill = NA) +
+    theme_minimal()
+')
+      } else {
+         code <- glue::glue('
+# devtools::install_github("ropengov/geofi")
+library(geofi)
+library(dplyr)
+library(ggplot2)
+shape <- geofi::get_zipcodes(year = {sub("^.+_", "", layer_row$name)})
+ggplot(shape) + 
+    geom_sf(fill = NA) +
+    theme_minimal()
+')
+      }
+   })
 
+   
+   data_input <- reactive({
+      
+      req(input$value_org)
+      req(input$value_layer)
+      
+      layer_row <- api_content[api_content$provider %in% input$value_org & api_content$title %in% input$value_layer,]
+      if (grepl("kunta", layer_row$name)){
+         shape <- geofi::get_municipalities(year = sub("^.+_", "", layer_row$name), scale = sub("^.+kunta", "",  sub("k_.+$", "", layer_row$name)))
+      } else {
+         shape <- geofi::get_zipcodes(year = sub("^.+_", "", layer_row$name))
+      }
+      
+      return(shape)
+      
+   })
+   
+   
 }
 
 # Run the application

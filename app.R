@@ -69,13 +69,23 @@ ui <- fluidPage(
 
       # Show a plot of the generated distribution
       mainPanel(
-        tabsetPanel(
-          tabPanel("Esikatselu",
-                   withSpinner(plotOutput("plot_shape", width = "100%", height = "850px"))),
-          # tabPanel("Esikatselu",
-          #          withSpinner(tableOutput("temp")))
-          tabPanel("R-koodi kartan piirtämiseen", verbatimTextOutput("output_code"))
-        )
+         shiny::fluidRow(column(7,
+            tags$h4("Kartan esikatselu"),
+            withSpinner(plotOutput("plot_shape", width = "100%", height = "850px"))),
+            column(5,
+            tags$h4("R-koodi kartan piirtämiseen"),
+            verbatimTextOutput("output_code"))
+         )
+
+        # tabsetPanel(
+        #   tabPanel("Esikatselu",
+        #            withSpinner(plotOutput("plot_shape", width = "5", height = "850px")),
+        #                        tags$h4("R-koodi kartan piirtämiseen"),
+        #                        verbatimTextOutput("output_code"))#,
+        #   # tabPanel("Esikatselu",
+        #   #          withSpinner(tableOutput("temp")))
+        #   # tabPanel("R-koodi kartan piirtämiseen", verbatimTextOutput("output_code"))
+        # )
       )
    )
 )
@@ -189,11 +199,14 @@ server <- function(input, output) {
       if (grepl("paavo", input$value_layer, ignore.case = TRUE)){
          plot <- ggplot(shape) +
             geom_sf(fill = NA) +
-            theme_minimal()
+            theme_minimal() +
+            labs(title = input$value_layer)
       } else {
          plot <- ggplot(shape) +
             theme_minimal(base_family = "PT Sans") +
-            geom_sf(fill = NA)
+            geom_sf(fill = NA) +
+            labs(title = paste0("Pohjadata: ", input$value_layer),
+                 subtitle = paste0("Aggregoitu muuttujan: ", input$value_layer, " tasolle"))
          if ("value_fill" %in% input$value_customize){
             plot <- plot + geom_sf(aes(fill = aggvar)) + labs(fill = input$value_aggregation)
          }
@@ -214,6 +227,11 @@ server <- function(input, output) {
    
    
    output$plot_shape <- renderPlot({
+      
+      req(input$value_org)
+      req(input$value_layer)
+      req(input$value_aggregation)
+
       plot_ggplot()
    })
    
@@ -287,21 +305,12 @@ server <- function(input, output) {
    
    output$output_code <- renderText({
       
-      
+      req(input$value_org)
+      req(input$value_layer)
+      req(input$value_aggregation)
+
       layer_row <- api_content[api_content$provider %in% input$value_org & api_content$title %in% input$value_layer,]
-      
-      
-#       glue::glue('
-# library(ows4R)
-# wfs <- WFSClient$new("{layer_row$api_url}",
-#                     serviceVersion = "{layer_row$api_ver}",
-#                     logger = "INFO")
-# 
-# caps <- wfs$getCapabilities()
-# ft <- caps$findFeatureTypeByName("{layer_row$name}", exact = TRUE)
-# shape <- ft$getFeatures()')
-      
-      
+
       if (grepl("kunta", layer_row$name)){
          code <- glue::glue('
 # devtools::install_github("ropengov/geofi")
@@ -309,13 +318,46 @@ library(geofi)
 library(dplyr)
 library(ggplot2)
 shape <- geofi::get_municipalities(year = {sub("^.+_", "", layer_row$name)}, scale = {sub("^.+kunta", "",  sub("k_.+$", "", layer_row$name))})
-shape2 <- shape %>% 
+shape <- shape %>% 
     group_by({input$value_aggregation}) %>% 
     summarise()
-ggplot(shape2) + 
+ggplot(shape) + 
     geom_sf(fill = NA) +
-    theme_minimal()
+    theme_minimal() +
+    labs(title = "Pohjadata: {input$value_layer}",
+         subtitle = "{paste0("Aggregoitu muuttujan: ", input$value_aggregation, " tasolle")}") 
 ')
+# code <- code_base #paste0(code_base, " + fill()", collapse = "\n")
+         if ("value_fill" %in% input$value_customize){
+            # code <- paste0(code_base, " + fill()", collapse = "\n")
+            code <- paste0(code,  
+                   glue::glue(' + 
+                                geom_sf(aes(fill = {input$value_aggregation})) +
+                                labs(fill = "{input$value_aggregation}")'))
+         } else {
+            code <- code
+         }
+         if ("value_labels" %in% input$value_customize){
+            code <- paste0(code,
+                      glue::glue(' + 
+                      ggrepel::geom_text_repel(data = shape %>%
+                                              sf::st_set_geometry(NULL) %>%
+                                              bind_cols(shape %>% sf::st_centroid() %>% sf::st_coordinates() %>% as_tibble()),
+                                           aes(label = {input$value_aggregation}, x = X, y = Y))'))
+
+         } else {
+            code <- code
+         }
+         if ("value_background" %in% input$value_customize){
+            code <- paste0(code,
+                      glue::glue(' +
+                      theme(axis.text = element_blank(),
+                                 axis.title = element_blank(),
+                                 panel.grid = element_blank())'))
+         } else {
+            code <- code
+         }
+         
       } else {
          code <- glue::glue('
 # devtools::install_github("ropengov/geofi")
@@ -325,9 +367,16 @@ library(ggplot2)
 shape <- geofi::get_zipcodes(year = {sub("^.+_", "", layer_row$name)})
 ggplot(shape) + 
     geom_sf(fill = NA) +
-    theme_minimal()
+    theme_minimal() +
+    labs(title = {input$value_layer})
 ')
+         return(code)
       }
+      
+
+      
+      
+      
    })
 
    

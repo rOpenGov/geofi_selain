@@ -16,6 +16,9 @@ library(sf)
 library(shiny)
 library(shinycssloaders)
 library(svglite)
+library(ggrepel)
+library(extrafont)
+loadfonts(quiet = TRUE)
 
 options(shiny.sanitize.errors = FALSE)
 
@@ -39,6 +42,7 @@ ui <- fluidPage(
                      choices = orglist),
       uiOutput("ui_layer_1"),
       uiOutput("ui_layer_2"),
+      uiOutput("customize_plot"),
       downloadButton("download_data", "Lataa aineisto"),
       br(),
       radioButtons("file_type", "",
@@ -49,7 +53,7 @@ ui <- fluidPage(
                    # must be zipped. Shiny can only output one file and each
                    # shapefile constitutes of several files.
                    choiceValues = list(".gpkg", ".zip", ".svg", ".pdf", ".png"),
-                   inline = TRUE),
+                   inline = FALSE),
       tags$hr(),
       tags$p("Tällä sovelluksella voit selata eri ",tags$code("geofi"),"-R-paketin tarjoamia datoja ja toiminnallisuuksia. Voit tallentaa aineistoja", 
              tags$code("GeoPackage, Shapefile, .svg, .pdf tai .png"),"-muotoihin sekä aggregoida kuntatason datoja ylemmille aluejaoille."),
@@ -66,9 +70,9 @@ ui <- fluidPage(
       mainPanel(
         tabsetPanel(
           tabPanel("Esikatselu",
-                   withSpinner(plotOutput("plot_shape", width = "100%", height = "850px"))),
-          tabPanel("Esikatselu",
-                   withSpinner(tableOutput("temp")))
+                   withSpinner(plotOutput("plot_shape", width = "100%", height = "850px")))
+          # tabPanel("Esikatselu",
+          #          withSpinner(tableOutput("temp")))
         )
       )
    )
@@ -84,7 +88,7 @@ server <- function(input, output) {
 
      tagList(
        selectInput(inputId = "value_layer",
-                   label = "Valitse aineisto:",
+                   label = "Valitse pohja-aineisto:",
                    choices = layers,
                    selected = layers[16])
      )
@@ -93,17 +97,22 @@ server <- function(input, output) {
    output$ui_layer_2 <- renderUI({
       
       # AGGREGOINTI!
-      layer_row <- api_content[api_content$provider %in% input$value_org & api_content$title %in% input$value_layer,]
+      if (grepl("paavo", input$value_layer, ignore.case = TRUE)){
+         
+      } else {
+         layer_row <- api_content[api_content$provider %in% input$value_org & api_content$title %in% input$value_layer,]
+         
+         tmp <- get(paste0("municipality_key_",sub("^.+_", "", layer_row$name)))
+         nms <- names(tmp)
+         
+         tagList(
+            selectInput(inputId = "value_aggregation",
+                        label = "Valitse aggregoitava alueluokitus:",
+                        choices = nms,
+                        selected = "mk_name")
+         )
+      }
 
-      tmp <- get(paste0("municipality_key_",sub("^.+_", "", layer_row$name)))
-      nms <- names(tmp)
-   
-      tagList(
-         selectInput(inputId = "value_aggregation",
-                     label = "Valitse aggregoitava alueluokitus:",
-                     choices = nms,
-                     selected = nms[4])
-      )
    })
 
    data_input <- reactive({
@@ -118,8 +127,6 @@ server <- function(input, output) {
          shape <- geofi::get_zipcodes(year = sub("^.+_", "", layer_row$name))
       }
       
-      # shape <- shape %>% group_by(mk_name) %>% summarise()
-      
       return(shape)
 
    })
@@ -131,10 +138,12 @@ server <- function(input, output) {
       req(input$value_layer)
       req(input$value_aggregation)
       
-      
-      if (input$value_aggregation %in% c("kunta","kunta_name","name_fi","name_sv")){
-      shape2 <- data_input()
+      if (grepl("paavo", input$value_layer, ignore.case = TRUE)){
+         shape2 <- data_input()
       } else {
+      # } else if (input$value_aggregation %in% c("kunta","kunta_name","name_fi","name_sv")){
+      # shape2 <- data_input()
+      # } else {
          shape <- data_input()
          shape$aggvar <- shape[[input$value_aggregation]]
          shape2 <- shape %>% 
@@ -143,6 +152,67 @@ server <- function(input, output) {
       }
       return(shape2)
       
+   })
+   
+   output$customize_plot <- renderUI({
+      
+      # AGGREGOINTI!
+      if (grepl("paavo", input$value_layer, ignore.case = TRUE)){
+         
+      } else {
+         tagList(
+            checkboxGroupInput("value_customize", 
+                               "Muokkaa karttaa", 
+                               selected = NA,
+                               choiceNames =
+                                  list("Lisää nimet",
+                                       "Lisää täyttö",
+                                       "Poista tausta"),
+                               choiceValues =
+                                  list("value_labels",
+                                       "value_fill",
+                                       "value_background")
+            )
+         )
+      }
+      
+   })
+   
+   
+   
+   plot_ggplot <- reactive({
+      
+      shape <- data_aggregate()
+      
+      if (grepl("paavo", input$value_layer, ignore.case = TRUE)){
+         plot <- ggplot(shape) +
+            geom_sf(fill = NA) +
+            theme_minimal()
+      } else {
+         plot <- ggplot(shape) +
+            theme_minimal(base_family = "PT Sans") +
+            geom_sf(fill = NA)
+         if ("value_fill" %in% input$value_customize){
+            plot <- plot + geom_sf(aes(fill = aggvar)) + labs(fill = input$value_aggregation)
+         }
+         if ("value_labels" %in% input$value_customize){
+            plot <- plot + geom_text_repel(data = shape %>% 
+                                              sf::st_set_geometry(NULL) %>% 
+                                              bind_cols(shape %>% st_centroid() %>% st_coordinates() %>% as_tibble()),
+                                           aes(label = aggvar, x = X, y = Y), family = "PT Sans")   
+         }
+         if ("value_background" %in% input$value_customize){
+            plot <- plot + theme(axis.text = element_blank(),
+                                 axis.title = element_blank(),
+                                 panel.grid = element_blank())
+         }
+      }
+      plot
+   })
+   
+   
+   output$plot_shape <- renderPlot({
+      plot_ggplot()
    })
    
 
@@ -191,44 +261,26 @@ server <- function(input, output) {
                          delete_dsn = TRUE, driver = "GPKG")
          } else if (input$file_type == ".svg") {
             # Write SVG using ggplot2
-            p1 <- dat %>%
-               select(1) %>%
-               ggplot() +
-               geom_sf() +
-               theme_minimal()
+            p1 <- plot_ggplot()
             ggsave(file, plot = p1, device = "svg")
          } else if (input$file_type == ".png") {
             # Write SVG using ggplot2
-            p1 <- dat %>%
-               select(1) %>%
-               ggplot() +
-               geom_sf() +
-               theme_minimal()
+            p1 <- plot_ggplot()
             ggsave(file, plot = p1, device = "png")
          } else if (input$file_type == ".pdf") {
             # Write SVG using ggplot2
-            p1 <- dat %>%
-               select(1) %>%
-               ggplot() +
-               geom_sf() +
-               theme_minimal()
+            p1 <- plot_ggplot()
             ggsave(file, plot = p1, device = cairo_pdf)
          }
       }
    )
 
-   output$plot_shape <- renderPlot({
-     shape <- data_aggregate()
-      ggplot(shape) +
-      geom_sf(aes(fill = aggvar)) +
-      theme_minimal() +
-       geom_sf_text(aes(label = aggvar))
-   })
+
    
-   output$temp <- renderTable({
-      shape <- data_aggregate()
-      st_drop_geometry(shape)
-   })
+   # output$temp <- renderTable({
+   #    shape <- data_aggregate()
+   #    st_drop_geometry(shape)
+   # })
 
 }
 

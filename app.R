@@ -33,7 +33,7 @@ names(orglist) <- paste0(apis$provider," [", apis$api_url,"]")
 ui <- fluidPage(
 
    # Application title
-   titlePanel("geofi-selain v.0.1.2"),
+   titlePanel("geofi-selain v.0.1.3"),
 
    # Sidebar with a slider input for number of bins
    sidebarLayout(
@@ -58,6 +58,8 @@ ui <- fluidPage(
                    # shapefile constitutes of several files.
                    choiceValues = list(".gpkg", ".zip", ".svg", ".pdf", ".png"),
                    inline = FALSE),
+      bookmarkButton(id = "bookmark1", 
+                     label = "Jaa valinnat"),
       tags$hr(),
       tags$p("Sovellus on tehty R:n",
              tags$a(href = "https://shiny.rstudio.com/", "Shiny")), 
@@ -92,7 +94,11 @@ ui <- fluidPage(
 )
 
 # Define server logic required to draw a histogram
-server <- function(input, output) {
+server <- function(input, output, session) {
+   
+   observeEvent(input$bookmark1, {
+      session$doBookmark()
+   })
 
    output$ui_layer_1 <- renderUI({
 
@@ -211,7 +217,7 @@ server <- function(input, output) {
             theme_minimal(base_family = "PT Sans") +
             geom_sf(fill = NA) +
             labs(title = paste0("Pohjadata: ", input$value_layer),
-                 subtitle = paste0("Aggregoitu muuttujan: ", input$value_layer, " tasolle"))
+                 subtitle = paste0("Aggregoitu muuttujan: ", input$value_aggregation, " tasolle"))
          if ("value_fill" %in% input$value_customize){
             plot <- plot + geom_sf(aes(fill = aggvar)) + labs(fill = input$value_aggregation)
          }
@@ -403,7 +409,7 @@ ggplot(shape) +
    
    
 }
-
+enableBookmarking(store = "url")
 # Run the application
 shinyApp(ui = ui, server = server)
 

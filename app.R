@@ -20,6 +20,21 @@ library(svglite)
 library(ggrepel)
 library(extrafont)
 loadfonts(quiet = TRUE)
+# library(bootstraplib)
+# bs_theme_new(version = "4-3", bootswatch = NULL)
+# bs_theme_add_variables(
+#    "body-bg" = "#ffffff",
+#    "body-color" = "f1f2f3",
+#    # "font-family-base" = "Pt Sans",
+#    "font-size-base" = "0.9rem",
+#    "nav-tabs-link-active-color" = "#3b4044",
+#    "primary" = "#4d4d00",
+#    "secondary" = "#999966",
+#    "well-bg" = "#f2f2f2",
+#    "card-border-color" = "darken($well-bg, 3%)",
+#    "card-border-radius" = 0,
+#    "card-border-width" = "0.5rem"
+# )
 
 options(shiny.sanitize.errors = FALSE)
 
@@ -31,25 +46,29 @@ names(orglist) <- paste0(apis$provider," [", apis$api_url,"]")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
+   # bootstrap(),
 
    # Application title
-   titlePanel("geofi-selain v.0.1.3"),
+   titlePanel("geofi-selain v.0.1.4"),
 
    # Sidebar with a slider input for number of bins
    sidebarLayout(
       sidebarPanel(
-         tags$p("Tällä sovelluksella voit selata eri ",tags$code("geofi"),"-R-paketin tarjoamia datoja ja toiminnallisuuksia. Voit tallentaa aineistoja", 
+         tags$p("Tällä sovelluksella voit selata eri ",tags$a(href = "https://github.com/rOpenGov/geofi", tags$code("geofi")),"-R-paketin tarjoamia datoja ja toiminnallisuuksia. Voit tallentaa aineistoja", 
                 tags$code("GeoPackage, Shapefile, .svg, .pdf tai .png"),"-muotoihin sekä aggregoida kuntatason datoja ylemmille aluejaoille."),
-         tags$hr(),
+         tags$h4("1. Luo kartta"),
          selectInput("value_org",
                      "Valitse datan lähde:",
                      choices = orglist),
       uiOutput("ui_layer_1"),
       uiOutput("ui_layer_2"),
       uiOutput("customize_plot"),
-      downloadButton("download_data", "Lataa aineisto"),
-      br(),
-      radioButtons("file_type", "",
+      bookmarkButton(id = "bookmark1", 
+                     label = "Jaa valinnat"),
+      tags$br(),
+      tags$hr(),
+      tags$h4("2. Lataa kartta-aineisto"),
+      radioButtons("file_type", "Valitse tiedostomuoto",
                    choiceNames = list("GeoPackage (.gpkg)", "Shapefile (.shp)",
                                        "Vektorikuva (.svg)", "Vektorikuva (.pdf)",
                                       "Bittimappikuva (.png)"),
@@ -58,15 +77,12 @@ ui <- fluidPage(
                    # shapefile constitutes of several files.
                    choiceValues = list(".gpkg", ".zip", ".svg", ".pdf", ".png"),
                    inline = FALSE),
-      bookmarkButton(id = "bookmark1", 
-                     label = "Jaa valinnat"),
+      downloadButton("download_data", "Lataa aineisto"),
       tags$hr(),
       tags$p("Sovellus on tehty R:n",
-             tags$a(href = "https://shiny.rstudio.com/", "Shiny")), 
+             tags$a(href = "https://shiny.rstudio.com/", "Shiny"), ":lla"), 
       tags$a(href = "https://gitlab.com/muuankarski/geofi_selain", "Lähdekoodi Gitlab:ssa"),
-      tags$p("Markus Kainu & Joona Lehtomäki 2020"),
-      tags$hr(),
-      tags$p("Tutustu myös uuteen", tags$a(href = "https://github.com/rOpenGov/geofi", tags$code("geofi")), "-pakettiin R:lle")
+      tags$p("Markus Kainu & Joona Lehtomäki 2020")
       ),
 
 
@@ -293,15 +309,15 @@ server <- function(input, output, session) {
          } else if (input$file_type == ".svg") {
             # Write SVG using ggplot2
             p1 <- plot_ggplot()
-            ggsave(file, plot = p1, device = "svg")
+            ggsave(file, plot = p1, device = "svg", width = 8.3, height = 11.7)
          } else if (input$file_type == ".png") {
             # Write SVG using ggplot2
             p1 <- plot_ggplot()
-            ggsave(file, plot = p1, device = "png")
+            ggsave(file, plot = p1, device = "png", width = 8.3, height = 11.7)
          } else if (input$file_type == ".pdf") {
             # Write SVG using ggplot2
             p1 <- plot_ggplot()
-            ggsave(file, plot = p1, device = cairo_pdf)
+            ggsave(file, plot = p1, device = cairo_pdf, width = 8.3, height = 11.7)
          }
       }
    )

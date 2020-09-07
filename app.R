@@ -20,36 +20,139 @@ library(svglite)
 library(ggrepel)
 library(extrafont)
 loadfonts(quiet = TRUE)
+# library(bootstraplib)
+# bs_theme_new(version = "4-3", bootswatch = NULL)
+# bs_theme_add_variables(
+#    "body-bg" = "#ffffff",
+#    "body-color" = "f1f2f3",
+#    # "font-family-base" = "Pt Sans",
+#    "font-size-base" = "0.9rem",
+#    "nav-tabs-link-active-color" = "#3b4044",
+#    "primary" = "#4d4d00",
+#    "secondary" = "#999966",
+#    "well-bg" = "#f2f2f2",
+#    "card-border-color" = "darken($well-bg, 3%)",
+#    "card-border-radius" = 0,
+#    "card-border-width" = "0.5rem"
+# )
 
 options(shiny.sanitize.errors = FALSE)
 
-api_content <- readRDS("./data/api_content.RDS")
-apis <- readRDS("./data/apis.RDS")
-
+# api_content <- readRDS("./data/api_content.RDS")
+api_content <- structure(list(provider = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 
+                                                     1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L
+), .Label = "Tilastokeskus", class = "factor"), title = c("Kunnat 2013 (1:1 000 000)", 
+                                                          "Kunnat 2013 (1:4 500 000)", "Kunnat 2014 (1:1 000 000)", "Kunnat 2014 (1:4 500 000)", 
+                                                          "Kunnat 2015 (1:1 000 000)", "Kunnat 2015 (1:4 500 000)", "Kunnat 2016 (1:1 000 000)", 
+                                                          "Kunnat 2016 (1:4 500 000)", "Kunnat 2017 (1:1 000 000)", "Kunnat 2017 (1:4 500 000)", 
+                                                          "Kunnat 2018 (1:1 000 000)", "Kunnat 2018 (1:4 500 000)", "Kunnat 2019 (1:1 000 000)", 
+                                                          "Kunnat 2019 (1:4 500 000)", "Kunnat 2020 (1:1 000 000)", "Kunnat 2020 (1:4 500 000)", 
+                                                          "Paavo-postinumeroalueet 2015", "Paavo-postinumeroalueet 2016", 
+                                                          "Paavo-postinumeroalueet 2017", "Paavo-postinumeroalueet 2018", 
+                                                          "Paavo-postinumeroalueet 2019", "Paavo-postinumeroalueet 2020"
+), name = c("tilastointialueet:kunta1000k_2013", "tilastointialueet:kunta4500k_2013", 
+            "tilastointialueet:kunta1000k_2014", "tilastointialueet:kunta4500k_2014", 
+            "tilastointialueet:kunta1000k_2015", "tilastointialueet:kunta4500k_2015", 
+            "tilastointialueet:kunta1000k_2016", "tilastointialueet:kunta4500k_2016", 
+            "tilastointialueet:kunta1000k_2017", "tilastointialueet:kunta4500k_2017", 
+            "tilastointialueet:kunta1000k_2018", "tilastointialueet:kunta4500k_2018", 
+            "tilastointialueet:kunta1000k_2019", "tilastointialueet:kunta4500k_2019", 
+            "tilastointialueet:kunta1000k_2020", "tilastointialueet:kunta4500k_2020", 
+            "postialue:pno_2015", "postialue:pno_2016", "postialue:pno_2017", 
+            "postialue:pno_2018", "postialue:pno_2019", "postialue:pno_2020"
+), api_url = c("http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs", 
+               "http://geo.stat.fi/geoserver/wfs", "http://geo.stat.fi/geoserver/wfs"
+), api_ver = c("1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", 
+               "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", 
+               "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", 
+               "1.0.0", "1.0.0"), layer_url = structure(c("http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta1000k_2013", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta4500k_2013", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta1000k_2014", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta4500k_2014", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta1000k_2015", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta4500k_2015", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta1000k_2016", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta4500k_2016", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta1000k_2017", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta4500k_2017", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta1000k_2018", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta4500k_2018", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta1000k_2019", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta4500k_2019", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta1000k_2020", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=tilastointialueet:kunta4500k_2020", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=postialue:pno_2015", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=postialue:pno_2016", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=postialue:pno_2017", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=postialue:pno_2018", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=postialue:pno_2019", 
+                                                          "http://geo.stat.fi/geoserver/wfs?service=WFS&version=1.0.0&request=getFeature&typename=postialue:pno_2020"
+               ), class = c("glue", "character"))), class = c("tbl_df", "tbl", 
+                                                              "data.frame"), row.names = c(NA, -22L))
+apis <- structure(list(api_url = c("http://geo.stat.fi/geoserver/wfs", 
+                                   "http://avaa.tdata.fi/geoserver/paituli/wfs", "http://geoserver.ymparisto.fi/geoserver/wfs?", 
+                                   "https://kartta.hsy.fi/geoserver/wfs", "https://kartta.hel.fi/ws/geoserver/avoindata/wfs", 
+                                   "http://geoserver.hel.fi/geoserver/ows", "https://kartat.espoo.fi/teklaogcweb/wfs.ashx", 
+                                   "http://gis.vantaa.fi/geoserver/wfs", "http://geodata.tampere.fi/geoserver/ows", 
+                                   "https://opaskartta.turku.fi/TeklaOGCWeb/WFS.ashx", "https://e-kartta.ouka.fi/TeklaOGCWeb/WFS.ashx", 
+                                   "http://kartta.kuopio.fi/TeklaOgcWeb/WFS.ashx", "https://kartta.rovaniemi.fi/teklaogcweb/WFS.ashx", 
+                                   "https://kartta.jkl.fi/TeklaOgcWeb/WFS.ashx", "http://lipas.cc.jyu.fi/geoserver/lipas/ows", 
+                                   "http://geoserver.lounaistieto.fi/geoserver/varsinais-suomi_aluesuunnittelu/ows", 
+                                   "http://geoserver.lounaistieto.fi/geoserver/koostetietovaranto/ows", 
+                                   "http://kartta.hyvinkaa.fi/wfs_1/ows.ashx", "https://extranet.liikennevirasto.fi/inspirepalvelu/avoin/wfs", 
+                                   "https://extranet.liikennevirasto.fi/inspirepalvelu/rajoitettu/wfs", 
+                                   "https://extranet.liikennevirasto.fi/inspirepalvelu/TransportNetworks/wfs", 
+                                   "http://gis2.luke.fi:8080/geoserver/kala/wfs", "http://gis2.luke.fi:8080/geoserver/riista/wfs", 
+                                   "http://maps.luomus.fi/geoserver/wfs"), ver = c("1.0.0", "2.0.0", 
+                                                                                   "2.0.0", "2.0.0", "1.0.0", "2.0.0", "1.0.0", "2.0.0", "2.0.0", 
+                                                                                   "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", 
+                                                                                   "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", "1.0.0", 
+                                                                                   "1.0.0"), provider = c("Tilastokeskus", "Paituli", "Syke", "HSY", 
+                                                                                                          "Helsinki", "Helsinki geoserver", "Espoo", "Vantaa", "Tampere", 
+                                                                                                          "Turku", "Oulu", "Kuopio", "Rovaniemi", "Jyväskylä", "LIPAS", 
+                                                                                                          "Lounaistieto: varsinais-suomi_aluesuunnittelu", "Lounaistieto: koostetietovaranto", 
+                                                                                                          "Hyvinkää", "Liikennevirasto avoin", "Liikennevirasto rajoitettu", 
+                                                                                                          "Liikennevirasto Transport network", "LUKE kala", "LUKE riista", 
+                                                                                                          "Luomus")), row.names = c(NA, -24L), class = c("tbl_df", "tbl", 
+                                                                                                                                                         "data.frame"))
+apis <- apis[apis$provider == "Tilastokeskus",]
 orglist <- apis$provider
 names(orglist) <- paste0(apis$provider," [", apis$api_url,"]")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
+   # bootstrap(),
 
    # Application title
-   titlePanel("geofi-selain v.0.1.3"),
+   titlePanel("geofi-selain v.0.1.4"),
 
    # Sidebar with a slider input for number of bins
    sidebarLayout(
       sidebarPanel(
-         tags$p("Tällä sovelluksella voit selata eri ",tags$code("geofi"),"-R-paketin tarjoamia datoja ja toiminnallisuuksia. Voit tallentaa aineistoja", 
+         tags$p("Tällä sovelluksella voit selata eri ",tags$a(href = "https://github.com/rOpenGov/geofi", tags$code("geofi")),"-R-paketin tarjoamia datoja ja toiminnallisuuksia. Voit tallentaa aineistoja", 
                 tags$code("GeoPackage, Shapefile, .svg, .pdf tai .png"),"-muotoihin sekä aggregoida kuntatason datoja ylemmille aluejaoille."),
-         tags$hr(),
+         tags$h4("1. Luo kartta"),
          selectInput("value_org",
                      "Valitse datan lähde:",
                      choices = orglist),
       uiOutput("ui_layer_1"),
       uiOutput("ui_layer_2"),
       uiOutput("customize_plot"),
-      downloadButton("download_data", "Lataa aineisto"),
-      br(),
-      radioButtons("file_type", "",
+      bookmarkButton(id = "bookmark1", 
+                     label = "Jaa valinnat"),
+      tags$br(),
+      tags$hr(),
+      tags$h4("2. Lataa kartta-aineisto"),
+      radioButtons("file_type", "Valitse tiedostomuoto",
                    choiceNames = list("GeoPackage (.gpkg)", "Shapefile (.shp)",
                                        "Vektorikuva (.svg)", "Vektorikuva (.pdf)",
                                       "Bittimappikuva (.png)"),
@@ -58,15 +161,12 @@ ui <- fluidPage(
                    # shapefile constitutes of several files.
                    choiceValues = list(".gpkg", ".zip", ".svg", ".pdf", ".png"),
                    inline = FALSE),
-      bookmarkButton(id = "bookmark1", 
-                     label = "Jaa valinnat"),
+      downloadButton("download_data", "Lataa aineisto"),
       tags$hr(),
       tags$p("Sovellus on tehty R:n",
-             tags$a(href = "https://shiny.rstudio.com/", "Shiny")), 
+             tags$a(href = "https://shiny.rstudio.com/", "Shiny"), ":lla"), 
       tags$a(href = "https://gitlab.com/muuankarski/geofi_selain", "Lähdekoodi Gitlab:ssa"),
-      tags$p("Markus Kainu & Joona Lehtomäki 2020"),
-      tags$hr(),
-      tags$p("Tutustu myös uuteen", tags$a(href = "https://github.com/rOpenGov/geofi", tags$code("geofi")), "-pakettiin R:lle")
+      tags$p("Markus Kainu & Joona Lehtomäki 2020")
       ),
 
 
@@ -293,15 +393,15 @@ server <- function(input, output, session) {
          } else if (input$file_type == ".svg") {
             # Write SVG using ggplot2
             p1 <- plot_ggplot()
-            ggsave(file, plot = p1, device = "svg")
+            ggsave(file, plot = p1, device = "svg", width = 8.3, height = 11.7)
          } else if (input$file_type == ".png") {
             # Write SVG using ggplot2
             p1 <- plot_ggplot()
-            ggsave(file, plot = p1, device = "png")
+            ggsave(file, plot = p1, device = "png", width = 8.3, height = 11.7)
          } else if (input$file_type == ".pdf") {
             # Write SVG using ggplot2
             p1 <- plot_ggplot()
-            ggsave(file, plot = p1, device = cairo_pdf)
+            ggsave(file, plot = p1, device = cairo_pdf, width = 8.3, height = 11.7)
          }
       }
    )

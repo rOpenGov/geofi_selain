@@ -1,3 +1,11 @@
+## 0.1.4 (2020-01-30)
+
+- A4-paper dimensions for graphics downloads
+
+### UI
+
+- Testing bootstraplib-library
+
 ## 0.1.3 (2020-01-29)
 
 - Bookmarkable state, bugfixes

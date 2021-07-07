@@ -1,3 +1,9 @@
+## 0.2.0 (2021-07-07)
+
+- App rewritten to use only the functionalities within package
+- UI refreshed
+
+
 ## 0.1.4 (2020-01-30)
 
 - A4-paper dimensions for graphics downloads

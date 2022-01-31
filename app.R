@@ -27,7 +27,7 @@ tk_geo_menu_list <- list("municipality" = list("year_min" = 2013,
                          "statistical_grid" = list("resolution" = c(1,5),
                                                    "auxillary_data" = c(FALSE,TRUE)),
                          "population_grid" = list("year_min" = 2010,
-                                                  "year_max" = 2019,
+                                                  "year_max" = 2020,
                                                   "resolution" = c(1,5))
                          )
 
@@ -110,7 +110,7 @@ ui <- fluidPage(lang = "fi",
       tags$hr(),
       tags$p("Sovellus on tehty R:n",
              tags$a(href = "https://shiny.rstudio.com/", "Shiny"), ":lla"), 
-      tags$p("Markus Kainu & Joona Lehtomäki 2020-2021")
+      tags$p("Markus Kainu & Joona Lehtomäki 2020-2022")
       ),
 
       mainPanel(

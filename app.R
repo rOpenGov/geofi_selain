@@ -69,13 +69,13 @@ ui <- fluidPage(lang = "fi",
       <div role = "navigation" class="collapse navbar-collapse justify-content-between" id="navbarResponsive">
         <ul class="navbar-nav ml-auto">
           <li class="nav-item">
-            <a class="nav-link" href="https://github.com/rOpenGov/geofi_selain"><code>&lt;sovelluksen lahdekoodi/&gt;&gt;</code></a>
+            <a class="nav-link text-dark" href="https://github.com/rOpenGov/geofi_selain"><code>&lt;sovelluksen lahdekoodi/&gt;&gt;</code></a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="https://ropengov.github.io/geofi/">geofi-paketti</a>
+            <a class="nav-link text-dark" href="https://ropengov.github.io/geofi/">geofi-paketti</a>
           </li>
                     <li class="nav-item">
-            <a class="nav-link" href="http://ropengov.org/">ropengov.org</a>
+            <a class="nav-link text-dark" href="http://ropengov.org/">ropengov.org</a>
           </li>
 
         </ul>

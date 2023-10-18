@@ -110,7 +110,7 @@ ui <- fluidPage(lang = "fi",
       tags$hr(),
       tags$p("Sovellus on tehty R:n",
              tags$a(href = "https://shiny.rstudio.com/", "Shiny"), ":lla"), 
-      tags$p("Markus Kainu & Joona Lehtomäki 2020-2022")
+      tags$p("Markus Kainu & Joona Lehtomäki 2020-2023")
       ),
 
       mainPanel(
